@@ -1,7 +1,5 @@
 from PyPDF2 import PdfReader
 import traceback
-from pathlib import Path
-from configs import OUTPUT_DIR
 from pptx import Presentation
 
 def read_pptx(p):
@@ -27,17 +25,17 @@ def read_pdf(p):
         try:
             texts.append(page.extract_text())
         except Exception as e:
-            print(type(e).__name__, repr(e), traceback.format_exec())
+            print(type(e).__name__, repr(e), traceback.format_exc())
     return "\n".join(texts)
 
 
-def read_by_fname(name):
-    if(name == ".pptx"):
+def read_by_fname(suffix, p):
+    if(suffix == ".pptx"):
         print("read pptx")
-        return read_pptx(name)
-    elif(name == ".pdf"):
+        return read_pptx(p)
+    elif(suffix == ".pdf"):
         print("read pdf")
-        return read_pdf(name)
+        return read_pdf(p)
     else:
         print("read None")
         return ""
@@ -46,6 +44,12 @@ def read_by_fname(name):
 
 def main():
     from argparse import ArgumentParser
+    from configs import OUTPUT_DIR
+    from pathlib import Path
+
+    
+
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     parser = ArgumentParser(usage=r"""
         python module.py [options]
         options: -r (recursively search through directory)
@@ -55,19 +59,20 @@ def main():
     parser.add_argument("-r", "--recursive", action="store_true", help="-r to search through directories")
     args = parser.parse_args()
     r = args.recursive
+
+
+
     text = ""
+    started = False
     while(True):
         ipt = input()
-        if(ipt == "{"):
-            started = True
-            continue
         if(started):
             if(ipt == "}"):
                 break
             else:
                 text += ipt
-        else:
-            continue
+        elif(ipt == r"{"):
+            started = True
 
     ofiles_str = text.strip().split(",")
     ofiles = {"ofiles":[], "flag":""}
@@ -79,24 +84,25 @@ def main():
         try:
             p = Path(s.strip())
         except Exception as e:
-            print(type(e).__name__, repr(e), traceback.format_exec())
+            print(type(e).__name__, repr(e), traceback.format_exc())
         else:
             ofiles["ofiles"].append(p)
-
+    n = 0
     if(ofiles["flag"] == "d"):
         for d in ofiles["ofiles"]:
             for f in d.iterdir():
-                text = read_pdf(f.absolute())
-                store_path = OUTPUT_DIR / f.name
+                text = read_by_fname(f.suffix, f.absolute())
+                store_path = OUTPUT_DIR / (f.stem + n + f.suffix)
                 with store_path.open("w", encoding="utf-8") as fh:
                     fh.write(text)
+                n += 1
     else:
         for f in ofiles["ofiles"]:
-            text = read_pdf(f.absolute())
-            store_path = OUTPUT_DIR / f.name
+            text = read_by_fname(f.suffix, f.absolute())
+            store_path = OUTPUT_DIR / (f.stem + n + f.suffix)
             with store_path.open("w", encoding="utf-8") as fh:
                 fh.write(text)
-            
+            n += 1
 
 if __name__ == "__main__":
     main()
