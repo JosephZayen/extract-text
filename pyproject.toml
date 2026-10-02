@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "extract_text"
+version = "2026.10.2"
+description = "extract text from files, supports cli usage, multiple inputs"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+extract-text="extract_text:main"

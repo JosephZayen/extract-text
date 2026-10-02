@@ -41,9 +41,10 @@ def read_by_fname(name):
     else:
         print("read None")
         return ""
-        
 
-if __name__ == "__main__":
+
+
+def main():
     from argparse import ArgumentParser
     parser = ArgumentParser(usage=r"""
         python module.py [options]
@@ -97,9 +98,5 @@ if __name__ == "__main__":
                 fh.write(text)
             
 
-        
-        
-            
-
-
-
+if __name__ == "__main__":
+    main()
