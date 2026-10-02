@@ -75,34 +75,38 @@ def main():
             started = True
 
     ofiles_str = text.strip().split(",")
-    ofiles = {"ofiles":[], "flag":""}
-    if(r):
-        ofiles["flag"] = "d"
-    else:
-        ofiles["flag"] = "-"
+    ofiles = []
     for s in ofiles_str:
         try:
             p = Path(s.strip())
         except Exception as e:
             print(type(e).__name__, repr(e), traceback.format_exc())
         else:
-            ofiles["ofiles"].append(p)
+            ofiles.append(p)
     n = 0
-    if(ofiles["flag"] == "d"):
-        for d in ofiles["ofiles"]:
-            for f in d.iterdir():
+    if r:
+        for d in ofiles:
+            for f in d.rglob("*"):
+                if(f.is_file()):
+                    try:
+                        text = read_by_fname(f.suffix, f.absolute())
+                        store_path = OUTPUT_DIR / (f.stem + str(n) + ".txt")
+                        with store_path.open("w", encoding="utf-8") as fh:
+                            fh.write(text)
+                        n += 1
+                    except Exception as e:
+                        print(type(e).__name__, repr(e), traceback.format_exc())
+
+    else:
+        for f in ofiles:
+            try:
                 text = read_by_fname(f.suffix, f.absolute())
-                store_path = OUTPUT_DIR / (f.stem + n + f.suffix)
+                store_path = OUTPUT_DIR / (f.stem + str(n) + ".txt")
                 with store_path.open("w", encoding="utf-8") as fh:
                     fh.write(text)
                 n += 1
-    else:
-        for f in ofiles["ofiles"]:
-            text = read_by_fname(f.suffix, f.absolute())
-            store_path = OUTPUT_DIR / (f.stem + n + f.suffix)
-            with store_path.open("w", encoding="utf-8") as fh:
-                fh.write(text)
-            n += 1
+            except Exception as e:
+                print(type(e).__name__, repr(e), traceback.format_exc())
 
 if __name__ == "__main__":
     main()
