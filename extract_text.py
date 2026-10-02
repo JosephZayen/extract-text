@@ -1,6 +1,9 @@
 from PyPDF2 import PdfReader
 import traceback
 from pptx import Presentation
+from threading import Thread
+from ai_parser import parse_tool, parser_init
+
 
 def read_pptx(p):
     prs = Presentation(p)
@@ -44,7 +47,7 @@ def read_by_fname(suffix, p):
 
 def main():
     from argparse import ArgumentParser
-    from configs import OUTPUT_DIR
+    from configs import OUTPUT_DIR, EXTRACT_DIR
     from pathlib import Path
 
     
@@ -57,13 +60,16 @@ def main():
         ',' for splitting file paths
     """)
     parser.add_argument("-r", "--recursive", action="store_true", help="-r to search through directories")
+    parser.add_argument("-p", "--parse", action="store_true", help="-p to parse outputs")
     args = parser.parse_args()
     r = args.recursive
+    to_parse = args.parse
 
-
+    # get text -----------------------------------------------------------------------------------------------------
 
     text = ""
     started = False
+    print("input paths")
     while(True):
         ipt = input()
         if(started):
@@ -78,7 +84,8 @@ def main():
     ofiles = []
     for s in ofiles_str:
         try:
-            p = Path(s.strip())
+            if(s.strip()):
+                p = Path(s.strip())
         except Exception as e:
             print(type(e).__name__, repr(e), traceback.format_exc())
         else:
@@ -96,7 +103,7 @@ def main():
                         n += 1
                     except Exception as e:
                         print(type(e).__name__, repr(e), traceback.format_exc())
-
+    
     else:
         for f in ofiles:
             try:
@@ -107,6 +114,52 @@ def main():
                 n += 1
             except Exception as e:
                 print(type(e).__name__, repr(e), traceback.format_exc())
+    #parse text -----------------------------------------------------------------------------------------------------
+    if to_parse:
+        # get sysprompt
+        sysprompt = ""
+        print("input prompts")
+        while(True):
+            ipt = input()
+            if(started):
+                if(ipt == "}"):
+                    break
+                else:
+                    sysprompt += ipt + "\n"
+            elif(ipt == r"{"):
+                started = True
+        #
+        def parse_write(wpath, client, sysprompt, messages):
+            response_txt = parse_tool(client, sysprompt, messages)
+            with wpath.open("a", encoding="utf-8") as f:
+                f.write(response_txt + "\n\n")
+            
+
+        # threads
+        ftxt = ""
+        threads = []
+        
+        client = parser_init()
+        for f in OUTPUT_DIR.iterdir():
+            print(f.name)
+            if(f.is_file() and f.suffix == ".txt"):
+                with f.open("r", encoding="utf-8") as f:
+                    ftxt = f.read()
+                    wpath = EXTRACT_DIR / f.name
+                    with wpath.open("w", encoding="utf-8") as f:
+                        pass
+                    for i in range(0, len(ftxt), 1000):
+                        thread = Thread(target=parse_write, 
+                                        kwargs={"client": client, "sysprompt": sysprompt.strip(), "messages":ftxt, "wpath": wpath}
+                                        )
+                        threads.append(thread)
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+            
+
 
 if __name__ == "__main__":
     main()

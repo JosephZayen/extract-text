@@ -5,4 +5,4 @@
 *.ppt
 *.doc
 **/__pycache__
-
+*.egg-info
