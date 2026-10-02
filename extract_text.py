@@ -2,6 +2,7 @@ from PyPDF2 import PdfReader
 import traceback
 from pptx import Presentation
 from threading import Thread
+import threading
 from ai_parser import parse_tool, parser_init
 
 
@@ -43,6 +44,20 @@ def read_by_fname(suffix, p):
         print("read None")
         return ""
 
+def read_block():
+    block = ""
+    started = False
+    while(True):
+        ipt = input()
+        if(started):
+            if(ipt == "}"):
+                break
+            else:
+                block += ipt + "\n"
+        elif(ipt == r"{"):
+            started = True
+    return block
+
 
 
 def main():
@@ -70,15 +85,7 @@ def main():
     text = ""
     started = False
     print("input paths")
-    while(True):
-        ipt = input()
-        if(started):
-            if(ipt == "}"):
-                break
-            else:
-                text += ipt
-        elif(ipt == r"{"):
-            started = True
+    text = read_block()
 
     ofiles_str = text.strip().split(",")
     ofiles = []
@@ -86,6 +93,8 @@ def main():
         try:
             if(s.strip()):
                 p = Path(s.strip())
+            else:
+                continue
         except Exception as e:
             print(type(e).__name__, repr(e), traceback.format_exc())
         else:
@@ -117,46 +126,43 @@ def main():
     #parse text -----------------------------------------------------------------------------------------------------
     if to_parse:
         # get sysprompt
-        sysprompt = ""
         print("input prompts")
-        while(True):
-            ipt = input()
-            if(started):
-                if(ipt == "}"):
-                    break
-                else:
-                    sysprompt += ipt + "\n"
-            elif(ipt == r"{"):
-                started = True
+        sysprompt = read_block()
+
         #
+        lock = threading.Lock()
         def parse_write(wpath, client, sysprompt, messages):
             response_txt = parse_tool(client, sysprompt, messages)
-            with wpath.open("a", encoding="utf-8") as f:
-                f.write(response_txt + "\n\n")
+            print(response_txt)
+            with lock:
+                with wpath.open("a", encoding="utf-8") as f:
+                    f.write(response_txt + "\n\n")
             
 
         # threads
         ftxt = ""
         threads = []
-        
+        size = 1000
         client = parser_init()
-        for f in OUTPUT_DIR.iterdir():
-            print(f.name)
-            if(f.is_file() and f.suffix == ".txt"):
-                with f.open("r", encoding="utf-8") as f:
-                    ftxt = f.read()
-                    wpath = EXTRACT_DIR / f.name
-                    with wpath.open("w", encoding="utf-8") as f:
+        EXTRACT_DIR.mkdir(parents=True, exist_ok=True)
+        for out_file in OUTPUT_DIR.iterdir():
+            print(out_file.name)
+            if(out_file.is_file() and out_file.suffix == ".txt"):
+                with out_file.open("r", encoding="utf-8") as fh:
+                    ftxt = fh.read()
+                    wpath = EXTRACT_DIR / out_file.name
+                    with wpath.open("w", encoding="utf-8") as fh:
                         pass
-                    for i in range(0, len(ftxt), 1000):
+                    for i in range(0, len(ftxt), size):
                         thread = Thread(target=parse_write, 
-                                        kwargs={"client": client, "sysprompt": sysprompt.strip(), "messages":ftxt, "wpath": wpath}
+                                        kwargs={"client": client, "sysprompt": sysprompt.strip(), "messages":ftxt[i:i+size], "wpath": wpath}
                                         )
                         threads.append(thread)
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
+        for i in range(0, len(threads), 100):
+            for thread in threads[i: i+100]:
+                thread.start()
+            for thread in threads[i: i+100]:
+                thread.join()
 
             
 
