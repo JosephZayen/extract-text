@@ -1,0 +1,9 @@
+*.pdf
+*.docx
+*.ppt
+*.txt
+*.ppt
+*.doc
+**/__pycache__
+
+
