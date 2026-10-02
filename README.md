@@ -1,5 +1,7 @@
 # extract-text
 
+this project parses cli inputs and extract text from given paths,
+currently supports pdf, pptx
 
 # usage
 
@@ -23,3 +25,9 @@ $ path,
 $ path
 $ }
 ```
+
+# output
+
+## path
+outputs in current working directory 
+cwd/output/

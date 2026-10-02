@@ -1,7 +1,7 @@
 from PyPDF2 import PdfReader
 import traceback
 from pathlib import Path
-from configs import BASE_DIR, OUTPUT_DIR
+from configs import OUTPUT_DIR
 from pptx import Presentation
 
 def read_pptx(p):
