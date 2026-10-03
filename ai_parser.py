@@ -4,7 +4,7 @@ from configs import configs
 import traceback
 import time
 
-MAX_RETRIES = configs.get("MAX_RETRIES") or 3
+MAX_RETRIES = configs.get("MAX_RETRIES")
 
 def parser_init():
     api_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -21,7 +21,7 @@ def parse(client, messages):
     for i in range(MAX_RETRIES):
         try:
             response = client.chat.completions.create(
-                model=configs.get("deepseek-model") or "deepseek-v4-pro",
+                model=configs.get("deepseek-weak-model"),
                 messages=messages,
                 extra_body={"thinking": {"type": "enabled"}}
             )
@@ -33,13 +33,10 @@ def parse(client, messages):
     return ""
 
 
-def parse_tool(client, messages, sysprompt):
-    if(isinstance(messages, str)):
-        sys_message = {"role": "system", "content": sysprompt or configs.get("sysprompt") or "分析，提取文本内容，尽量简短"}
-        user_message = {"role": "user", "content": messages}
-        messages = [sys_message, user_message]
-    elif(not isinstance(messages, list)):
-        raise TypeError("messages incorrect")
+def parse_tool(client, user_content, sysprompt):
+    sys_message = {"role": "system", "content": sysprompt}
+    user_message = {"role": "user", "content": user_content}
+    messages = [sys_message, user_message]
     return parse(client, messages)
     
 
