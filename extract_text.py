@@ -125,15 +125,20 @@ def main():
                 print(type(e).__name__, repr(e), traceback.format_exc())
     #parse text -----------------------------------------------------------------------------------------------------
     if to_parse:
+        count_input = 0
         # get sysprompt
         print("input prompts")
         sysprompt = read_block()
 
         #
         lock = threading.Lock()
+
         def parse_write(wpath, client, sysprompt, messages):
             response_txt = parse_tool(client, sysprompt, messages)
             print(response_txt)
+            nonlocal count_input
+            if(response_txt.strip()):
+                count_input += len(messages)
             with lock:
                 with wpath.open("a", encoding="utf-8") as f:
                     f.write(response_txt + "\n\n")
@@ -142,7 +147,7 @@ def main():
         # threads
         ftxt = ""
         threads = []
-        size = 1000
+        size = 10000
         client = parser_init()
         EXTRACT_DIR.mkdir(parents=True, exist_ok=True)
         for out_file in OUTPUT_DIR.iterdir():
@@ -158,11 +163,12 @@ def main():
                                         kwargs={"client": client, "sysprompt": sysprompt.strip(), "messages":ftxt[i:i+size], "wpath": wpath}
                                         )
                         threads.append(thread)
-        for i in range(0, len(threads), 100):
-            for thread in threads[i: i+100]:
+        for i in range(0, len(threads), 5):
+            for thread in threads[i: i+5]:
                 thread.start()
-            for thread in threads[i: i+100]:
+            for thread in threads[i: i+5]:
                 thread.join()
+        print(count_input)
 
             
 

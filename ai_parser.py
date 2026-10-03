@@ -21,15 +21,17 @@ def parse(client, messages):
     for i in range(MAX_RETRIES):
         try:
             response = client.chat.completions.create(
-                model=configs.get("deepseek-weak-model") or "deepseek-v4-flash",
+                model=configs.get("deepseek-model") or "deepseek-v4-pro",
                 messages=messages,
-                reasoning_effort="high",
                 extra_body={"thinking": {"type": "enabled"}}
             )
             return response.choices[0].message.content
         except Exception as e:
             print(type(e).__name__, repr(e), traceback.format_exc())
             time.sleep(10 * (i+1)**2)
+    print("returns nothing")
+    return ""
+
 
 def parse_tool(client, messages, sysprompt):
     if(isinstance(messages, str)):
