@@ -18,13 +18,13 @@ pip install -e ./
 extract-text [subcommand] [options] 
 
 parse [-c] \
-parse output directory and extract key points by AI, -c to input sysprompt by command line
+parse output directory and extract key points by AI, `-c` to input sysprompt by command line
 
 read [-r] \
-read from given paths, extract text from text files, -r to read from directories
+read from given paths, extract text from text files, `-r` to read from directories
 
-after this, u can type { to start typing paths or prompt, } to end \
-type , to separate parameters
+after this, u can type `{` to start typing paths or prompt, `}` to end \
+typing `,` to separate parameters
 
 The DeepSeek API integration is hard-coded, so only DeepSeek can be used. you will need the `DEEPSEEK_API_KEY` environment variable.
 
