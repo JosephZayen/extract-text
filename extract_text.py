@@ -165,7 +165,7 @@ def __cli():
 
     # get text -----------------------------------------------------------------------------------------------------
     if(args.command == "read"):
-        r = True if args.r else False
+        r = True if args.recursive else False
         read_txtfile(r)
     #parse text -----------------------------------------------------------------------------------------------------
     if (args.command == "parse"):
